@@ -14,6 +14,38 @@ static constexpr VkExtent2D swapChainExtent = {500, 500};
 
 class Renderer
 {
+private:
+    VkInstance instance = VK_NULL_HANDLE;
+
+    GLFWwindow *window = nullptr;
+    VkSurfaceKHR surface = VK_NULL_HANDLE;
+
+    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+    VkDevice device = VK_NULL_HANDLE;
+    VkQueue graphicsQueue = VK_NULL_HANDLE;
+
+    VkSwapchainKHR swapChain = VK_NULL_HANDLE;
+    std::vector<VkImage> swapChainImages;
+    std::vector<VkImageView> swapChainImageViews;
+
+    VkPipeline pipeline = VK_NULL_HANDLE;
+    VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
+
+    VkCommandPool commandPool = VK_NULL_HANDLE;
+    std::array<VkCommandBuffer, FRAMES_IN_FLIGHT> commandBuffers;
+
+    std::vector<VkSemaphore> renderFinishedSemaphores;
+    std::array<VkSemaphore, FRAMES_IN_FLIGHT> imageAvailableSemaphores;
+    std::array<VkFence, FRAMES_IN_FLIGHT> inFlightFences;
+
+    // Triangle data
+    VkBuffer vertexBuffer;
+    VkDeviceMemory vertexBufferMemory;
+
+    VkBuffer indexBuffer;
+    VkDeviceMemory indexBufferMemory;
+    uint32_t indexCount;
+
 public:
     Renderer()
     {
@@ -24,7 +56,7 @@ public:
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-        window = glfwCreateWindow(swapChainExtent.width, swapChainExtent.height, "Vulkan", nullptr, nullptr);
+        window = glfwCreateWindow(swapChainExtent.width, swapChainExtent.height, "Hello Triangle", nullptr, nullptr);
 
         if (!window)
             exit(1);
@@ -32,7 +64,7 @@ public:
         // Instance
         VkApplicationInfo s_app{};
         s_app.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-        s_app.pApplicationName = "VulkanRenderer";
+        s_app.pApplicationName = "Hello Triangle";
         s_app.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
         s_app.apiVersion = VK_API_VERSION_1_3;
 
@@ -63,6 +95,8 @@ public:
         vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
         std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
         vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilies.data());
+
+        uint32_t graphicsQueueFamilyIndex = 0;
 
         uint32_t i = 0;
         for (const VkQueueFamilyProperties &queueFamily : queueFamilies)
@@ -341,6 +375,8 @@ public:
         };
         std::vector<uint32_t> indices = {0, 1, 2};
 
+        indexCount = static_cast<uint32_t>(indices.size());
+
         auto uploadHostVisibleBuffer = [&](VkDeviceSize bufferSize, const void *srcData, VkBufferUsageFlags usage, VkBuffer *outBuffer, VkDeviceMemory *outMemory)
         {
             VkBufferCreateInfo s_buffer{};
@@ -526,42 +562,6 @@ public:
             currentFrame = (currentFrame + 1) % FRAMES_IN_FLIGHT;
         }
     }
-
-private:
-    VkInstance instance = VK_NULL_HANDLE;
-
-    GLFWwindow *window = nullptr;
-    VkSurfaceKHR surface = VK_NULL_HANDLE;
-
-    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-    VkDevice device = VK_NULL_HANDLE;
-    VkQueue graphicsQueue = VK_NULL_HANDLE;
-
-    VkSwapchainKHR swapChain = VK_NULL_HANDLE;
-    std::vector<VkImage> swapChainImages;
-    std::vector<VkImageView> swapChainImageViews;
-
-    VkPipeline pipeline = VK_NULL_HANDLE;
-    VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
-
-    VkCommandPool commandPool = VK_NULL_HANDLE;
-    std::array<VkCommandBuffer, FRAMES_IN_FLIGHT> commandBuffers;
-
-    std::vector<VkSemaphore> renderFinishedSemaphores;
-
-    std::array<VkSemaphore, FRAMES_IN_FLIGHT> imageAvailableSemaphores;
-    std::array<VkFence, FRAMES_IN_FLIGHT> inFlightFences;
-
-    uint32_t graphicsQueueFamilyIndex = 0;
-
-    // Triangle
-    VkBuffer vertexBuffer;
-    VkDeviceMemory vertexBufferMemory;
-    uint32_t vertexCount;
-
-    VkBuffer indexBuffer;
-    VkDeviceMemory indexBufferMemory;
-    uint32_t indexCount;
 };
 
 int main()
